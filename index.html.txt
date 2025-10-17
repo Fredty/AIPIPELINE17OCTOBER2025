@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Multi-AI Pipeline Analyzer</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+    
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      overflow: hidden;
+    }
+    
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 40px;
+      text-align: center;
+    }
+    
+    .header h1 {
+      font-size: 2.5em;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 15px;
+    }
+    
+    .header p {
+      font-size: 1.2em;
+      opacity: 0.9;
+    }
+    
+    .content {
+      padding: 40px;
+    }
+    
+    .settings-btn {
+      background: #667eea;
+      color: white;
+      border: none;
+      padding: 15px 30px;
+      border-radius: 10px;
+      font-size: 1.1em;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: all 0.3s;
+      margin-bottom: 30px;
+    }
+    
+    .settings-btn:hover {
+      background: #5568d3;
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+    }
+    
+    .settings-panel {
+      display: none;
+      background: #f8f9fa;
+      border: 2px solid #667eea;
+      border-radius: 15px;
+      padding: 30px;
+      margin-bottom: 30px;
+    }
+    
+    .settings-panel.active {
+      display: block;
+    }
+    
+    .api-key-group {
+      margin-bottom: 20px;
+    }
+    
+    .api-key-group label {
+      display: block;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 8px;
+      font-size: 1.05em;
+    }
+    
+    .api-key-group input {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #ddd;
+      border-radius: 8px;
+      font-size: 1em;
+      transition: border-color 0.3s;
+    }
+    
+    .api-key-group input:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+    
+    .api-key-group small {
+      display: block;
+      color: #666;
+      margin-top: 5px;
+    }
+    
+    .api-key-group small a {
+      color: #667eea;
+      text-decoration: none;
+    }
+    
+    .save-keys-btn {
+      background: #10b981;
+      color: white;
+      border: none;
+      padding: 12px 30px;
+      border-radius: 8px;
+      font-size: 1.1em;
+      cursor: pointer;
+      transition: all 0.3s;
+      margin-top: 10px;
+    }
+    
+    .save-keys-btn:hover {
+      background: #059669;
+      transform: translateY(-2px);
+    }
+    
+    .input-section {
+      margin-bottom: 30px;
+    }
+    
+    .input-section label {
+      display: block;
+      font-size: 1.3em;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 15px;
+    }
+    
+    .input-section textarea {
+      width: 100%;
+      min-height: 150px;
+      padding: 15px;
+      border: 2px solid #ddd;
+      border-radius: 10px;
+      font-size: 1.05em;
+      font-family: inherit;
+      resize: vertical;
+      transition: border-color 0.3s;
+    }
+    
+    .input-section textarea:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+    
+    .run-btn {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      padding: 18px 40px;
+      border-radius: 12px;
+      font-size: 1.3em;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 0 auto;
+      transition: all 0.3s;
+      box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+    }
+    
+    .run-btn:hover:not(:disabled) {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+    }
+    
+    .run-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    
+    .progress-section {
+      display: none;
+      margin: 30px 0;
+    }
+    
+    .progress-section.active {
+      display: block;
+    }
+    
+    .progress-bar-container {
+      background: #e5e7eb;
+      border-radius: 10px;
+      height: 30px;
+      overflow: hidden;
+      margin-bottom: 15px;
+    }
+    
+    .progress-bar {
+      background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+      height: 100%;
+      width: 0%;
+      transition: width 0.5s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 600;
+    }
+    
+    .progress-status {
+      text-align: center;
+      color: #666;
+      font-size: 1.1em;
+    }
+    
+    .results-section {
+      display: none;
+      margin-top: 40px;
+    }
+    
+    .results-section.active {
+      display: block;
+    }
+    
+    .stage {
+      background: #f8f9fa;
+      border: 2px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 25px;
+      margin-bottom: 25px;
+    }
+    
+    .stage h2 {
+      color: #667eea;
+      margin-bottom: 15px;
+      font-size: 1.5em;
+    }
+    
+    .stage h3 {
+      color: #764ba2;
+      margin: 20px 0 10px 0;
+      font-size: 1.2em;
+    }
+    
+    .response {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 15px;
+      border-left: 4px solid #667eea;
+    }
+    
+    .consensus {
+      background: #d1fae5;
+      border-left-color: #10b981;
+    }
+    
+    .disagreement {
+      background: #fee2e2;
+      border-left-color: #ef4444;
+    }
+    
+    .partial {
+      background: #fef3c7;
+      border-left-color: #f59e0b;
+    }
+    
+    .export-btn {
+      background: #10b981;
+      color: white;
+      border: none;
+      padding: 15px 30px;
+      border-radius: 10px;
+      font-size: 1.1em;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 20px auto;
+      transition: all 0.3s;
+    }
+    
+    .export-btn:hover {
+      background: #059669;
+      transform: translateY(-2px);
+    }
+    
+    .error {
+      background: #fee2e2;
+      border: 2px solid #ef4444;
+      border-radius: 10px;
+      padding: 20px;
+      margin: 20px 0;
+      color: #991b1b;
+    }
+    
+    .error h3 {
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .success {
+      background: #d1fae5;
+      border: 2px solid #10b981;
+      border-radius: 10px;
+      padding: 15px;
+      margin: 15px 0;
+      color: #065f46;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🧪 Multi-AI Pipeline Analyzer</h1>
+      <p>Get refined insights through iterative multi-model analysis</p>
+    </div>
+    
+    <div class="content">
+      <button class="settings-btn" onclick="toggleSettings()">
+        ⚙️ Settings & API Keys
+      </button>
+      
+      <div class="settings-panel" id="settingsPanel">
+        <h2 style="margin-bottom: 20px;">API Configuration</h2>
+        
+        <div class="api-key-group">
+          <label>Anthropic API Key (Claude Sonnet 4.5 & Haiku)</label>
+          <input type="password" id="anthropicKey" placeholder="sk-ant-api03-...">
+          <small>Get your key at <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a></small>
+        </div>
+        
+        <div class="api-key-group">
+          <label>OpenAI API Key (ChatGPT-4o-mini)</label>
+          <input type="password" id="openaiKey" placeholder="sk-proj-...">
+          <small>Get your key at <a href="https://platform.openai.com/api-keys" target="_blank">platform.openai.com</a></small>
+        </div>
+        
+        <div class="api-key-group">
+          <label>Google API Key (Gemini Pro)</label>
+          <input type="password" id="googleKey" placeholder="AIza...">
+          <small>Get your key at <a href="https://aistudio.google.com" target="_blank">aistudio.google.com</a></small>
+        </div>
+        
+        <div class="api-key-group">
+          <label>DeepSeek API Key</label>
+          <input type="password" id="deepseekKey" placeholder="sk-...">
+          <small>Get your key at <a href="https://platform.deepseek.com" target="_blank">platform.deepseek.com</a></small>
+        </div>
+        
+        <button class="save-keys-btn" onclick="saveApiKeys()">💾 Save API Keys</button>
+        <div id="saveStatus"></div>
+      </div>
+      
+      <div class="input-section">
+        <label>Your Question:</label>
+        <textarea id="userQuestion" placeholder="Enter your question or scenario for multi-AI analysis..."></textarea>
+      </div>
+      
+      <button class="run-btn" id="runBtn" onclick="runPipeline()">
+        🚀 Run Multi-AI Analysis
+      </button>
+      
+      <div class="progress-section" id="progressSection">
+        <div class="progress-bar-container">
+          <div class="progress-bar" id="progressBar">0%</div>
+        </div>
+        <div class="progress-status" id="progressStatus">Initializing...</div>
+      </div>
+      
+      <div id="errorContainer"></div>
+      
+      <div class="results-section" id="resultsSection">
+        <button class="export-btn" onclick="exportResults()">📥 Export Full Analysis</button>
+        <div id="resultsContent"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const CORS_PROXY = 'https://corsproxy.io/?';
+    
+    let apiKeys = {
+      anthropic: '',
+      openai: '',
+      google: '',
+      deepseek: ''
+    };
+    
+    let allResults = {};
+    
+    // Load saved API keys
+    window.addEventListener('DOMContentLoaded', () => {
+      const saved = localStorage.getItem('apiKeys');
+      if (saved) {
+        apiKeys = JSON.parse(saved);
+        document.getElementById('anthropicKey').value = apiKeys.anthropic;
+        document.getElementById('openaiKey').value = apiKeys.openai;
+        document.getElementById('googleKey').value = apiKeys.google;
+        document.getElementById('deepseekKey').value = apiKeys.deepseek;
+      }
+    });
+    
+    function toggleSettings() {
+      const panel = document.getElementById('settingsPanel');
+      panel.classList.toggle('active');
+    }
+    
+    function saveApiKeys() {
+      apiKeys = {
+        anthropic: document.getElementById('anthropicKey').value.trim(),
+        openai: document.getElementById('openaiKey').value.trim(),
+        google: document.getElementById('googleKey').value.trim(),
+        deepseek: document.getElementById('deepseekKey').value.trim()
+      };
+      
+      localStorage.setItem('apiKeys', JSON.stringify(apiKeys));
+      
+      const status = document.getElementById('saveStatus');
+      status.innerHTML = '<div class="success">✅ API Keys saved successfully!</div>';
+      setTimeout(() => status.innerHTML = '', 3000);
+    }
+    
+    function showError(message) {
+      const container = document.getElementById('errorContainer');
+      container.innerHTML = `
+        <div class="error">
+          <h3>❌ Error</h3>
+          <p>${message}</p>
+          <p><small>If this persists, check your API keys in Settings.</small></p>
+        </div>
+      `;
+    }
+    
+    function updateProgress(percent, status) {
+      document.getElementById('progressBar').style.width = percent + '%';
+      document.getElementById('progressBar').textContent = percent + '%';
+      document.getElementById('progressStatus').textContent = status;
+    }
+    
+    async function callClaude(prompt, model = 'claude-sonnet-4-20250514') {
+      const response = await fetch(`${CORS_PROXY}https://api.anthropic.com/v1/messages`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKeys.anthropic,
+          'anthropic-version': '2023-06-01'
+        },
+        body: JSON.stringify({
+          model: model,
+          max_tokens: 4096,
+          messages: [{ role: 'user', content: prompt }]
+        })
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(`Claude API error: ${response.status} - ${JSON.stringify(error)}`);
+      }
+      
+      const data = await response.json();
+      return data.content[0].text;
+    }
+    
+    async function callChatGPT(prompt) {
+      const response = await fetch(`${CORS_PROXY}https://api.openai.com/v1/chat/completions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKeys.openai}`
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o-mini',
+          messages: [{ role: 'user', content: prompt }],
+          max_tokens: 4096
+        })
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(`ChatGPT API error: ${response.status} - ${JSON.stringify(error)}`);
+      }
+      
+      const data = await response.json();
+      return data.choices[0].message.content;
+    }
+    
+    async function callGemini(prompt) {
+      try {
+        const geminiResponse = await fetch(`${CORS_PROXY}https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key=${apiKeys.google}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }]
+          })
+        });
+        
+        if (!geminiResponse.ok) {
+          const error = await geminiResponse.json();
+          throw new Error(`Gemini API error: ${geminiResponse.status} - ${JSON.stringify(error)}`);
+        }
+        
+        const geminiData = await geminiResponse.json();
+        return geminiData.candidates[0].content.parts[0].text;
+      } catch (error) {
+        throw new Error(`Gemini error: ${error.message}`);
+      }
+    }
+    
+    async function callDeepSeek(prompt) {
+      const response = await fetch(`${CORS_PROXY}https://api.deepseek.com/v1/chat/completions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKeys.deepseek}`
+        },
+        body: JSON.stringify({
+          model: 'deepseek-chat',
+          messages: [{ role: 'user', content: prompt }],
+          max_tokens: 4096
+        })
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(`DeepSeek API error: ${response.status} - ${JSON.stringify(error)}`);
+      }
+      
+      const data = await response.json();
+      return data.choices[0].message.content;
+    }
+    
+    async function runPipeline() {
+      const question = document.getElementById('userQuestion').value.trim();
+      
+      if (!question) {
+        showError('Please enter a question!');
+        return;
+      }
+      
+      if (!apiKeys.anthropic || !apiKeys.openai || !apiKeys.google || !apiKeys.deepseek) {
+        showError('Please set all API keys in Settings first!');
+        return;
+      }
+      
+      // Reset
+      document.getElementById('errorContainer').innerHTML = '';
+      document.getElementById('resultsSection').classList.remove('active');
+      document.getElementById('progressSection').classList.add('active');
+      document.getElementById('runBtn').disabled = true;
+      
+      allResults = { question };
+      
+      try {
+        // Stage 1: Initial Claude Analysis
+        updateProgress(10, 'Stage 1: Claude Sonnet analyzing your question...');
+        allResults.stage1 = await callClaude(question);
+        
+        // Stage 2: Four Model Critiques
+        updateProgress(30, 'Stage 2: Getting critiques from 4 different AI models...');
+        const critiquePrompt = `Analyze this AI response and provide a critical evaluation. Identify strengths, weaknesses, blind spots, and alternative perspectives:\n\n${allResults.stage1}`;
+        
+        const [chatgptCritique, geminiCritique, deepseekCritique, haikuCritique] = await Promise.all([
+          callChatGPT(critiquePrompt),
+          callGemini(critiquePrompt),
+          callDeepSeek(critiquePrompt),
+          callClaude(critiquePrompt, 'claude-3-5-haiku-20241022')
+        ]);
+        
+        allResults.stage2 = {
+          chatgpt: chatgptCritique,
+          gemini: geminiCritique,
+          deepseek: deepseekCritique,
+          haiku: haikuCritique
+        };
+        
+        // Stage 3: Synthesis into Two Outcomes
+        updateProgress(50, 'Stage 3: Claude synthesizing critiques into 2 refined outcomes...');
+        const synthesisPrompt = `Given these four critiques of an initial analysis, synthesize them into TWO distinct outcomes:
+1. A CONSERVATIVE outcome (safe, proven approach)
+2. A BOLD outcome (innovative, higher-risk approach)
+
+Critiques:
+ChatGPT: ${chatgptCritique}
+Gemini: ${geminiCritique}
+DeepSeek: ${deepseekCritique}
+Claude Haiku: ${haikuCritique}
+
+Original question: ${question}`;
+        
+        allResults.stage3 = await callClaude(synthesisPrompt);
+        
+        // Stage 4: Eight Analyses of Two Outcomes
+        updateProgress(70, 'Stage 4: All 4 models analyzing both outcomes (8 analyses)...');
+        const analysisPrompt = outcome => `Evaluate this proposed outcome. What are its merits, risks, and viability?\n\n${outcome}`;
+        
+        const outcomes = allResults.stage3.split(/Outcome \d:|CONSERVATIVE|BOLD/).filter(s => s.trim().length > 100);
+        
+        const [
+          chatgpt1, gemini1, deepseek1, haiku1,
+          chatgpt2, gemini2, deepseek2, haiku2
+        ] = await Promise.all([
+          callChatGPT(analysisPrompt(outcomes[0])),
+          callGemini(analysisPrompt(outcomes[0])),
+          callDeepSeek(analysisPrompt(outcomes[0])),
+          callClaude(analysisPrompt(outcomes[0]), 'claude-3-5-haiku-20241022'),
+          callChatGPT(analysisPrompt(outcomes[1])),
+          callGemini(analysisPrompt(outcomes[1])),
+          callDeepSeek(analysisPrompt(outcomes[1])),
+          callClaude(analysisPrompt(outcomes[1]), 'claude-3-5-haiku-20241022')
+        ]);
+        
+        allResults.stage4 = {
+          outcome1: { chatgpt: chatgpt1, gemini: gemini1, deepseek: deepseek1, haiku: haiku1 },
+          outcome2: { chatgpt: chatgpt2, gemini: gemini2, deepseek: deepseek2, haiku: haiku2 }
+        };
+        
+        // Stage 5: Final Meta-Analysis
+        updateProgress(90, 'Stage 5: Claude performing final meta-analysis...');
+        const metaPrompt = `Perform a final meta-analysis. Synthesize all insights, highlight consensus points, note disagreements, and provide a definitive recommendation with reasoning.
+
+All analyses:
+${JSON.stringify(allResults, null, 2)}`;
+        
+        allResults.stage5 = await callClaude(metaPrompt);
+        
+        updateProgress(100, 'Complete! 🎉');
+        
+        // Display results
+        displayResults();
+        
+      } catch (error) {
+        console.error('Pipeline error:', error);
+        showError(error.message);
+        document.getElementById('progressSection').classList.remove('active');
+      } finally {
+        document.getElementById('runBtn').disabled = false;
+      }
+    }
+    
+    function displayResults() {
+      const container = document.getElementById('resultsContent');
+      
+      let html = `
+        <div class="stage">
+          <h2>📊 Stage 1: Initial Analysis</h2>
+          <div class="response">${formatText(allResults.stage1)}</div>
+        </div>
+        
+        <div class="stage">
+          <h2>🔍 Stage 2: Four Model Critiques</h2>
+          <h3>ChatGPT-4o-mini Critique:</h3>
+          <div class="response">${formatText(allResults.stage2.chatgpt)}</div>
+          <h3>Gemini Pro Critique:</h3>
+          <div class="response">${formatText(allResults.stage2.gemini)}</div>
+          <h3>DeepSeek Critique:</h3>
+          <div class="response">${formatText(allResults.stage2.deepseek)}</div>
+          <h3>Claude Haiku Critique:</h3>
+          <div class="response">${formatText(allResults.stage2.haiku)}</div>
+        </div>
+        
+        <div class="stage">
+          <h2>⚖️ Stage 3: Two Synthesized Outcomes</h2>
+          <div class="response">${formatText(allResults.stage3)}</div>
+        </div>
+        
+        <div class="stage">
+          <h2>🎯 Stage 4: Eight Outcome Analyses</h2>
+          <h3>Outcome 1 Analyses:</h3>
+          <div class="response"><strong>ChatGPT:</strong> ${formatText(allResults.stage4.outcome1.chatgpt)}</div>
+          <div class="response"><strong>Gemini:</strong> ${formatText(allResults.stage4.outcome1.gemini)}</div>
+          <div class="response"><strong>DeepSeek:</strong> ${formatText(allResults.stage4.outcome1.deepseek)}</div>
+          <div class="response"><strong>Claude Haiku:</strong> ${formatText(allResults.stage4.outcome1.haiku)}</div>
+          
+          <h3>Outcome 2 Analyses:</h3>
+          <div class="response"><strong>ChatGPT:</strong> ${formatText(allResults.stage4.outcome2.chatgpt)}</div>
+          <div class="response"><strong>Gemini:</strong> ${formatText(allResults.stage4.outcome2.gemini)}</div>
+          <div class="response"><strong>DeepSeek:</strong> ${formatText(allResults.stage4.outcome2.deepseek)}</div>
+          <div class="response"><strong>Claude Haiku:</strong> ${formatText(allResults.stage4.outcome2.haiku)}</div>
+        </div>
+        
+        <div class="stage">
+          <h2>🏆 Stage 5: Final Recommendation</h2>
+          <div class="response consensus">${formatText(allResults.stage5)}</div>
+        </div>
+      `;
+      
+      container.innerHTML = html;
+      document.getElementById('resultsSection').classList.add('active');
+      document.getElementById('progressSection').classList.remove('active');
+    }
+    
+    function formatText(text) {
+      return text.replace(/\n/g, '<br>');
+    }
+    
+    function exportResults() {
+      const text = `
+MULTI-AI PIPELINE ANALYSIS
+==========================
+
+Question: ${allResults.question}
+
+STAGE 1: INITIAL ANALYSIS
+${allResults.stage1}
+
+STAGE 2: FOUR MODEL CRITIQUES
+ChatGPT: ${allResults.stage2.chatgpt}
+Gemini: ${allResults.stage2.gemini}
+DeepSeek: ${allResults.stage2.deepseek}
+Claude Haiku: ${allResults.stage2.haiku}
+
+STAGE 3: SYNTHESIZED OUTCOMES
+${allResults.stage3}
+
+STAGE 4: OUTCOME ANALYSES
+Outcome 1:
+  ChatGPT: ${allResults.stage4.outcome1.chatgpt}
+  Gemini: ${allResults.stage4.outcome1.gemini}
+  DeepSeek: ${allResults.stage4.outcome1.deepseek}
+  Claude Haiku: ${allResults.stage4.outcome1.haiku}
+
+Outcome 2:
+  ChatGPT: ${allResults.stage4.outcome2.chatgpt}
+  Gemini: ${allResults.stage4.outcome2.gemini}
+  DeepSeek: ${allResults.stage4.outcome2.deepseek}
+  Claude Haiku: ${allResults.stage4.outcome2.haiku}
+
+STAGE 5: FINAL RECOMMENDATION
+${allResults.stage5}
+      `;
+      
+      const blob = new Blob([text], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'multi-ai-analysis.txt';
+      a.click();
+    }
+  </script>
+</body>
+</html>
